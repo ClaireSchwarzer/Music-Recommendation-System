@@ -5,31 +5,31 @@ import os
 from music.nn.net import AlexNet
 from music.nn.GTZANDataset import GTZANDataset
 
-# 设置 标签文件路径
+# Set the path for the annotations file
 PATH_ANNOTATIONS_FILE = os.path.abspath("./music/nn/features_30_sec_final.csv")
-# 设置音频文件路径
+# Set the path for the audio files
 PATH_AUDIO_DIR = "./music/static/GTZAN/genres_original"
 ANNOTATIONS_FILE = PATH_ANNOTATIONS_FILE
 AUDIO_DIR = PATH_AUDIO_DIR
-# 采样频率
+# Sample rate
 SAMPLE_RATE = 22050
-# 采样数量 5s
+# Number of samples (5 seconds)
 NUM_SAMPLES = 22050 * 5
-# 初始化模型
+# Initialize the model
 cnn = AlexNet()
-# 导入模型
+# Load the model
 path_abs = os.path.abspath("./music/nn/best_model_okk.pth")
-state_dict = torch.load(path_abs,map_location='cpu')
+state_dict = torch.load(path_abs, map_location='cpu')
 cnn.load_state_dict(state_dict)
 
-# 这个没用
+# This is not used
 mfcc = torchaudio.transforms.MFCC(
-        sample_rate=SAMPLE_RATE,
-        n_mfcc=128,
-        log_mels=True
+    sample_rate=SAMPLE_RATE,
+    n_mfcc=128,
+    log_mels=True
 )
 
-# 转化梅尔频谱
+# Convert to Mel spectrogram
 mel_spectrogram = torchaudio.transforms.MelSpectrogram(
     sample_rate=SAMPLE_RATE,
     n_fft=1024,
@@ -37,11 +37,11 @@ mel_spectrogram = torchaudio.transforms.MelSpectrogram(
     n_mels=64
 )
 
-# 数据处理
+# Data processing
 gtzan = GTZANDataset(annotations_file=ANNOTATIONS_FILE, audio_dir=AUDIO_DIR,
                      transformation=mfcc, target_sample_rate=SAMPLE_RATE,
                      num_samples=NUM_SAMPLES, device="cpu")
-# 标签列表
+# Label list
 class_mapping = [
     'blues',
     'classical',
@@ -57,74 +57,74 @@ class_mapping = [
 
 cnn.eval()
 
-# 这个是对应index页面的，也就是初版
+# This corresponds to the index.html page, i.e., the initial version
 def get_music():
     global class_mapping
-    # 随机获得一个音乐下标
+    # Get a random music index
     initial = random.sample(range(0, 1000), 1)[0]
     print(f'initial:{initial}')
-    # 获得音乐标签下标
+    # Get the music label index
     music_init_index = gtzan[initial][1]
-    # 获得音乐的地址
+    # Get the music URL
     music_init_url = gtzan[initial][2]
     print(f'music_init:{music_init_url}')
     return class_mapping[music_init_index], music_init_url, music_init_index
 
-# project.html 终版：初步封装音乐数据
+# project.html final version: Preliminary encapsulation of music data
 def get_music_list(initial):
     music_list = []
     for i in range(5):
         with torch.no_grad():
-            # 字典 对参数进行封账
+            # Dictionary to store the parameters
             per = {}
-            # 获得风格名
+            # Get the genre name
             name = class_mapping[gtzan[initial[i]][1]]
-            # 获得音乐地址
+            # Get the music URL
             init_url = gtzan[initial[i]][2]
             mp3 = init_url.replace("/music", '')
-            # 音乐风格名
+            # Music genre name
             per["name"] = name
-            # 音乐名
+            # Music name
             per["artist"] = init_url.rsplit("/", 1)[1]
-            # 音乐地址
+            # Music URL
             per["mp3Url"] = mp3
-            # 音乐id，主要是使用前端模板
+            # Music ID, mainly used for frontend templates
             per["id"] = i
-            # 音乐风格下标
+            # Music genre index
             per["style"] = int(gtzan[initial[i]][1])
-            # 随机获得背景图片
+            # Get a random background image
             per["picUrl"] = f'./static/background/background_{random.randint(0, 7)}.jpg'
             music_list.append(per)
     return music_list
 
 
-# project.html 随机获得5首歌曲信息
+# project.html: Get information for 5 randomly selected songs
 def net_music_list():
     global class_mapping
-    initial = random.sample(range(0, 1000),5)
+    initial = random.sample(range(0, 1000), 5)
     return get_music_list(initial)
 
-# project.html 随机获得同种类型的5首歌曲的信息
+# project.html: Get information for 5 randomly selected songs of the same genre
 def net_recommend_genre():
     global class_mapping
-    # 随机0~9数字，类别
+    # Randomly select a number from 0 to 9 as the genre index
     index = random.sample(range(0, 10), 1)[0]
-    # 在0~999中随机取一个数字，音乐下标
+    # Randomly select a number from 0 to 999 within the genre range
     initial = random.sample(range(index * 100, index * 100 + 99), 5)
     return get_music_list(initial)
 
 
-# 对喜欢的歌曲进行推荐
+# Recommend songs based on favorite songs
 def net_predict_music(music_index):
     global class_mapping
-    # 随机获得20个下标
+    # Randomly select 20 indices
     ran = random.sample(range(0, 1000), 20)
     music_list = []
-    # 对这20首歌曲放入神经网络模型中
-    # 神经网络输出值进行排序，选取值最大的5首
-    # 这边建议去改造以下AlexNet，再添加一个SoftMax比较合适
+    # Pass these 20 songs through the neural network model
+    # Sort the output values and select the top 5 values
+    # It is recommended to modify AlexNet and add a SoftMax layer for better results
     for i in range(20):
-        # 以下省略部分代码
+        # Omitted code below
         with torch.no_grad():
             per = {}
             predictions = cnn(gtzan[ran[i]][0].unsqueeze_(0))
@@ -140,12 +140,12 @@ def net_predict_music(music_index):
             per["style"] = int(gtzan[ran[i]][1])
             per["picUrl"] = f'./static/background/background_{random.randint(0, 7)}.jpg'
             music_list.append(per)
-    # 对输出值进行排序
+    # Sort the output values
     sort_music = sorted(music_list, key=lambda x: x.get("value"), reverse=True)
-    # 选择值最大的5首返回
+    # Select the top 5 values
     return sort_music[0:5]
 
-# 这个为index.html页面的 原理差不多，就是对歌曲推荐
+# This corresponds to the index.html page. The logic is similar, recommending songs based on the selected song
 def get_predict_music(music_init_index):
     # global music_init_index
     global class_mapping
@@ -153,14 +153,14 @@ def get_predict_music(music_init_index):
     max_music_index = None
     max_music_url = None
     real_label_index = None
-    # 随机选取15首
+    # Randomly select 15 songs
     ran = random.sample(range(0, 1000), 15)
     content = {}
     for i in range(15):
         with torch.no_grad():
             predictions = cnn(gtzan[ran[i]][0].unsqueeze_(0))
             predicted_item = predictions[0][music_init_index].item()
-            # 记录输出值最大的一首歌的信息
+            # Record the information of the song with the maximum output value
             if max_music_value < predicted_item:
                 max_music_value = predicted_item
                 max_music_index = i

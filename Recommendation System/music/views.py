@@ -8,7 +8,6 @@ import random
 import os
 from django.conf import settings
 
-# 这部分代码没用，当时给我同学挂的一个项目
 
 # import cv2
 # import numpy as np
@@ -66,7 +65,7 @@ from django.conf import settings
 #
 # ################################################
 
-# index页面
+
 def index(request):
     music_init_label, music_init_url, music_init_index = get_music()
     # global init_url
@@ -86,8 +85,8 @@ def index(request):
     return render(request, 'index.html', {"content": content})
 
 
-# index.html相关：返回Json
-def josn_index(request):
+# Related to index.html: Return JSON
+def json_index(request):
     music_init_label, music_init_url, music_init_index = get_music()
     image = f'./static/background/background_{random.randint(0, 7)}.jpg'
     init_index = music_init_index
@@ -103,7 +102,7 @@ def josn_index(request):
 
     return JsonResponse(content, safe=False)
 
-# index.html相关，返回预测信息
+# Related to index.html: Return prediction information
 def predicting(request):
     get_result = request.POST
     print(request.POST)
@@ -115,94 +114,40 @@ def predicting(request):
                 "mp3": max_url,
                 "oga": "http://www.jplayer.org/audio/ogg/Miaow-07-Bubble.ogg",
                 "poster": image,
-                "init_index":get_result["init_index"]}]
+                "init_index": get_result["init_index"]}]
     return JsonResponse(content, safe=False)
 
-# index.html相关，返回初始加载的歌曲信息
+# Related to index.html: Return initially loaded song information
 def previous(request):
     get_result = request.POST
     content = [{"title": get_result["title"],
                 "artist": "The Starting Point",
                 "mp3": get_result["mp3"],
                 "poster": "https://file.fishei.cn/wallhaven-g89p2.png",
-                "init_index":get_result["init_index"]},
+                "init_index": get_result["init_index"]},
                ]
     return JsonResponse(content, safe=False)
 
 
-# project.html相关，返回随机推荐5首同种风格的歌曲
+# Related to project.html: Return 5 randomly recommended songs of the same genre
 def get_recommend_genre(request):
     music_list = net_recommend_genre()
-    return JsonResponse({"musicList": music_list, "getId":5190711437}, safe=False)
+    return JsonResponse({"musicList": music_list, "getId": 5190711437}, safe=False)
 
-# 返回project.html页面
+# Return project.html page
 def project(request):
     return render(request, 'project.html')
 
-# project.html相关，随机推荐5首歌曲
+# Related to project.html: Randomly recommend 5 songs
 def get_music_list(request):
     music_list = net_music_list()
-    return JsonResponse({"musicList": music_list, "getId":5177783391}, safe=False)
+    return JsonResponse({"musicList": music_list, "getId": 5177783391}, safe=False)
 
-# project.html相关，对喜欢的歌曲进行推荐
+# Related to project.html: Recommend songs based on liked song
 def get_music_recommend(request):
     get_result = request.GET["musicIndex"]
     if len(get_result) == 0:
         get_result = random.sample(range(0, 10), 1)[0]
     print(get_result)
     music_list = net_predict_music(int(get_result))
-    return JsonResponse({"musicList": music_list, "getId":5190711435}, safe=False)
-
-# 这部分代码没用，当时给我同学挂的一个项目
-#
-# def upload(request):
-#     if request.method == "GET":
-#         return render(request, 'upload.html')
-#     print(request.POST)
-#     print(request.FILES)
-#     file_object = request.FILES.get('picture')
-#     file_path = os.path.join(settings.MEDIA_ROOT,file_object.name)
-#     print(file_object.name)
-#     f = open(file_path, mode='wb')
-#     for chunk in file_object.chunks():
-#         f.write(chunk)
-#     f.close()
-#     return HttpResponse("ok")
-#
-#
-# def recognition(request):
-#     svm = cv2.ml.SVM_create()
-#     path_abs = os.path.abspath("./music/static/svm/svmtest.xml")
-#     #print(path_abs)
-#     svm = cv2.ml.SVM_load(path_abs)
-#     result = None
-#     ##################################
-#     if request.method == "GET":
-#         return render(request, 'upload.html')
-#     #print(request.POST)
-#     #print(request.FILES)
-#     file_object = request.FILES.get('picture')
-#     file_path = os.path.join(settings.MEDIA_ROOT,file_object.name)
-#     print(file_object.name)
-#     f = open(file_path, mode='wb')
-#     for chunk in file_object.chunks():
-#         f.write(chunk)
-#     f.close()
-#     #################################
-#     # iImage = 2
-#     #
-#     #  下面主要是显示测试集的识别效果与准确率，接口部分应该不需要这些，转换成
-#
-#     test_img_path = os.path.abspath(file_path)
-#     #print(test_img_path)
-#     img = cv2.imread(test_img_path)  # 此处是根据上方路径读取图片，安卓我应该直接发另一种数据，大概可以跳过
-#     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 图片转为灰度图，我可以在安卓中一并完成
-#     descriptors = extract_bow_descriptors(gray_img)  # 此处是调用安卓发来的灰度图来提取特征
-#     prediction = svm.predict(descriptors)  # 根据模型识别最后输出为一个float类型的数据传回去给安卓就行
-#     if prediction[1][0][0] == 1.0:
-#         result = 'mouse'
-#     elif prediction[1][0][0] == 2.0:
-#         result = 'keyboard'
-#     else:
-#         result = 'host'
-#     return JsonResponse({"code":"200", "Results": result}, safe=False)
+    return JsonResponse({"musicList": music_list, "getId": 5190711435}, safe=False)
